@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MUSIFY — Music Player</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- HIDDEN AUDIO ELEMENT -->
+<audio id="audioPlayer" preload="auto"></audio>
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="fileInput" accept="audio/*" multiple style="display:none"/>
+
+<!-- FLOATING ADD BUTTON -->
+<button class="fab" id="fabAdd" title="Add Song">+</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ADD SONG MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">&#x2715;</button>
+    <div class="modal-title">ADD YOUR SONG</div>
+
+    <!-- TABS -->
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="file">UPLOAD FILE</button>
+      <button class="modal-tab" data-tab="url">ONLINE URL</button>
+      <button class="modal-tab" data-tab="manual">DEMO ENTRY</button>
+    </div>
+
+    <!-- TAB: FILE UPLOAD -->
+    <div class="tab-panel active" id="tab-file">
+      <div class="file-drop-area" id="fileDrop">
+        <div class="drop-icon">&#127925;</div>
+        <p>Drop your MP3 / WAV / OGG file here</p>
+        <small>or click to browse your device</small>
+      </div>
+      <div class="selected-file-info" id="selectedFileInfo"></div>
+    </div>
+
+    <!-- TAB: URL -->
+    <div class="tab-panel" id="tab-url">
+      <div class="url-hint">
+        Paste a direct link to an audio file (.mp3, .ogg, .wav).<br/>
+        Works with any publicly accessible audio URL.
+      </div>
+      <div class="field full" style="margin-bottom:14px;">
+        <label>AUDIO URL *</label>
+        <input type="text" id="fUrl" placeholder="https://example.com/song.mp3"/>
+      </div>
+    </div>
+
+    <!-- TAB: MANUAL DEMO -->
+    <div class="tab-panel" id="tab-manual">
+      <div class="url-hint">
+        Add a demo entry (no real audio — for playlist display only).
+      </div>
+    </div>
+
+    <!-- SHARED METADATA FIELDS -->
+    <div class="form-grid" style="margin-top:8px;">
+      <div class="field full">
+        <label>SONG TITLE *</label>
+        <input type="text" id="fTitle" placeholder="e.g. Vaathi Coming"/>
+      </div>
+      <div class="field">
+        <label>ARTIST *</label>
+        <input type="text" id="fArtist" placeholder="e.g. Anirudh" list="artistSuggestions"/>
+        <datalist id="artistSuggestions"></datalist>
+      </div>
+      <div class="field">
+        <label>ALBUM</label>
+        <input type="text" id="fAlbum" placeholder="e.g. Master"/>
+      </div>
+      <div class="field">
+        <label>GENRE</label>
+        <select id="fGenre">
+          <option value="Tamil Pop">Tamil Pop</option>
+          <option value="Tamil Folk">Tamil Folk</option>
+          <option value="Tamil Hip-Hop">Tamil Hip-Hop</option>
+          <option value="Tamil Mass">Tamil Mass</option>
+          <option value="Tamil Melody">Tamil Melody</option>
+          <option value="Tamil Classic">Tamil Classic</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field" id="durationField">
+        <label>DURATION (mm:ss)</label>
+        <input type="text" id="fDuration" placeholder="Auto-detected"/>
+      </div>
+      <div class="field full">
+        <label>COVER EMOJI</label>
+        <div class="emoji-picker" id="emojiPicker"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="btnCancel">CANCEL</button>
+      <button class="btn-add" id="btnAddSong">ADD TO PLAYLIST</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    MUSIFY
+  </div>
+  <div class="header-right">
+    <button class="header-upload-btn" id="headerUploadBtn">
+      <span>&#9650;</span> UPLOAD SONGS
+    </button>
+    <div class="header-meta">MUSIC PLAYER v3.0 // REAL AUDIO</div>
+  </div>
+</header>
+
+<!-- APP LAYOUT -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- NOW PLAYING -->
+    <div class="now-playing">
+      <div class="np-label">&#9658; NOW PLAYING</div>
+      <div class="np-cover">
+        <div class="np-cover-art" id="npCoverArt">&#127925;</div>
+        <div class="np-cover-overlay"></div>
+      </div>
+      <div class="np-info">
+        <div class="np-title" id="npTitle">Select a Song</div>
+        <div class="np-artist" id="npArtist">&#8212;</div>
+        <div class="np-album" id="npAlbum"></div>
+        <div id="npSourceBadge"></div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar-track" id="progressTrack">
+          <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+        </div>
+        <div class="progress-times">
+          <span id="timeElapsed">0:00</span>
+          <span id="timeDuration">0:00</span>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="ctrl-btn" id="btnShuffle" title="Shuffle">&#8644;</button>
+        <button class="ctrl-btn" id="btnPrev" title="Previous">&#9198;</button>
+        <button class="ctrl-play" id="btnPlay" title="Play/Pause">&#9654;</button>
+        <button class="ctrl-btn" id="btnNext" title="Next">&#9197;</button>
+        <button class="ctrl-btn" id="btnFav" title="Favourite">&#9825;</button>
+      </div>
+      <div class="volume-row">
+        <span class="vol-icon">&#128264;</span>
+        <input type="range" id="volumeSlider" min="0" max="100" value="75"/>
+        <span class="vol-icon">&#128266;</span>
+      </div>
+      <div class="np-stats" id="npStats"></div>
+    </div>
+
+    <!-- RECENTLY PLAYED -->
+    <div class="recently-played">
+      <div class="section-title">RECENTLY PLAYED</div>
+      <div id="recentList"></div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="search-wrap">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search songs, artists, albums…"/>
+      </div>
+      <select id="genreFilter"><option value="">All Genres</option></select>
+      <select id="artistFilter"><option value="">All Artists</option></select>
+      <select id="sortSelect">
+        <option value="title">Sort: Title</option>
+        <option value="artist">Sort: Artist</option>
+        <option value="album">Sort: Album</option>
+        <option value="duration">Sort: Duration</option>
+        <option value="playCount">Sort: Play Count</option>
+      </select>
+    </div>
+
+    <!-- RESULTS COUNT -->
+    <div class="results-meta">
+      <div class="results-count"><span id="songCount">0</span> TRACKS</div>
+    </div>
+
+    <!-- SONG GRID -->
+    <div class="song-grid" id="songGrid"></div>
+  </main>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
